@@ -13,3 +13,12 @@ tudaruka-continue
 entry point -namaskaram
 exit point-nanni
 input-edkuka
+
+pip install flask flask-cors;
+
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+.\.venv\Scripts\Activate.ps1
+cd interpreter
+pip install flask flask-cors
+# In your app.py
+app = Flask(__name__, static_folder='static', template_folder='templates')

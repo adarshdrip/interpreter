@@ -9,6 +9,7 @@ class Interpreter:
         if self.pos < len(self.tokens): self.current = self.tokens[self.pos]
 
     def run(self):
+        # Pre-scan for Structs and Functions
         idx = 0
         while idx < len(self.tokens):
             if self.tokens[idx].value == "FUNCTION": self.functions[self.tokens[idx+1].value] = idx
@@ -19,28 +20,38 @@ class Interpreter:
                     j += 1
                 self.structs[name] = members
             idx += 1
+            
         entry = next((i for i, t in enumerate(self.tokens) if t.value == "ENTRY"), None)
         if entry is not None:
             self.pos = entry; self.advance()
-            while self.current.value != "EXIT": self.execute()
+            while self.current.value != "EXIT":
+                self.execute()
+                # Safety break if return happens in main
+                if self.is_ret: break
         print("✅ Program Finished")
 
     def execute(self):
         if self.is_ret: return 
+        
         if self.current.value in ["FUNCTION", "STRUCT"]:
             target = "FUNC_END" if self.current.value == "FUNCTION" else "STRUCT_END"
             while self.current.value != target: self.advance()
             self.advance()
         elif self.current.value == "IF":
-            self.advance(); self.advance(); cond = self.eval_expr(); self.advance()
-            if cond: self.execute()
+            self.advance(); self.advance() # if (
+            cond = self.eval_expr(); self.advance() # )
+            if cond: 
+                self.execute()
             else:
+                # Skip the statement if condition is false
                 while self.current.type != "NEWLINE" and self.current.type != "EOF": self.advance()
                 self.advance()
         elif self.current.value == "PRINT":
             self.advance(); self.advance(); print(self.eval_expr()); self.advance()
         elif self.current.value == "RETURN":
-            self.advance(); self.ret_val = self.eval_expr(); self.is_ret = True
+            self.advance()
+            self.ret_val = self.eval_expr()
+            self.is_ret = True # Signal that we hit a return statement
         elif self.current.type == "IDENTIFIER":
             if self.pos+1 < len(self.tokens) and self.tokens[self.pos+1].value == "(": self.call_func()
             else: self.assign()
@@ -59,37 +70,57 @@ class Interpreter:
             else: self.stack[-1][name] = val
 
     def call_func(self):
-        name = self.current.value; self.advance(); self.advance()
+        name = self.current.value; self.advance(); self.advance() # name (
         args = []
         while self.current.value != ")":
             args.append(self.eval_expr())
             if self.current.value == ",": self.advance()
-        self.advance()
+        self.advance() # )
+
         if name in self.functions:
-            old_p = self.pos; self.pos = self.functions[name]
-            self.advance(); self.advance(); self.advance()
+            old_pos = self.pos
+            self.pos = self.functions[name]
+            self.advance(); self.advance(); self.advance() # func name (
+            
             params = []
             while self.current.value != ")":
                 params.append(self.current.value); self.advance()
                 if self.current.value == ",": self.advance()
-            self.advance()
+            self.advance() # )
+
+            # RECURSION FIX: Create new frame
             new_frame = {params[i]: args[i] for i in range(min(len(params), len(args)))}
-            self.stack.append(new_frame); prev_ret = self.is_ret; self.is_ret = False
-            while self.current.value != "FUNC_END" and not self.is_ret: self.execute()
-            res = self.ret_val; self.stack.pop(); self.pos = old_p; self.is_ret = prev_ret
-            return res
+            self.stack.append(new_frame)
+            
+            # Save the caller's return state
+            old_is_ret = self.is_ret 
+            self.is_ret = False # Reset for the new function execution
+            
+            while self.current.value != "FUNC_END" and not self.is_ret:
+                self.execute()
+            
+            # Capture the result of this specific call
+            result = self.ret_val 
+            
+            self.stack.pop()
+            self.pos = old_pos
+            self.current = self.tokens[self.pos]
+            
+            # CRITICAL FIX: Reset is_ret so the parent can continue its calculation
+            self.is_ret = old_is_ret 
+            return result
         return 0
 
     def eval_expr(self):
         left = self.eval_term()
         while self.current.value in ["+", "-", "==", "!=", ">", "<", ">=", "<="]:
             op = self.current.value; self.advance(); right = self.eval_term()
+            # RECURSION FIX: If right side returned, clear flag so we can finish this operation
+            if self.is_ret: self.is_ret = False
+            
             if op == "+":
-                # FIX: Handle mixed string/number concatenation
-                if isinstance(left, str) or isinstance(right, str):
-                    left = str(left) + str(right)
-                else:
-                    left += right
+                if isinstance(left, str) or isinstance(right, str): left = str(left) + str(right)
+                else: left += right
             elif op == "-": left -= right
             elif op == "==": left = 1 if left == right else 0
             elif op == "!=": left = 1 if left != right else 0
@@ -103,6 +134,9 @@ class Interpreter:
         left = self.eval_fact()
         while self.current.value in ["*", "/"]:
             op = self.current.value; self.advance(); right = self.eval_fact()
+            # RECURSION FIX: Same check for multiplication/division
+            if self.is_ret: self.is_ret = False
+            
             left = (left * right) if op == "*" else (left / right)
         return left
 
@@ -112,23 +146,24 @@ class Interpreter:
             v = float(t.value) if "." in t.value else int(t.value); self.advance(); return v
         if t.type == "STRING": v = t.value; self.advance(); return v
         
-        # INPUT logic
         if t.value == "INPUT":
             self.advance(); self.advance()
             prompt = self.current.value if self.current.type == "STRING" else ""
             if prompt: self.advance()
             self.advance()
             raw = input(prompt)
-            # Try to convert to number, otherwise keep as string
             try:
                 if "." in raw: return float(raw)
                 return int(raw)
-            except ValueError:
-                return raw
+            except: return raw
 
         if t.type == "IDENTIFIER":
-            if t.value in self.structs: name = t.value; self.advance(); return name
-            if self.pos+1 < len(self.tokens) and self.tokens[self.pos+1].value == "(": return self.call_func()
+            if t.value in self.structs: 
+                name = t.value; self.advance(); return name
+            # Check if this identifier is being used to call a function
+            if self.pos+1 < len(self.tokens) and self.tokens[self.pos+1].value == "(":
+                return self.call_func()
+            
             name = t.value; self.advance()
             if self.current.value == ".":
                 self.advance(); m = self.current.value; self.advance()

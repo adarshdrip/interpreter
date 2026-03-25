@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MONE | Terminal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div id="splash" class="screen">
+        <div class="diamond-wrapper">
+            <div class="diamond"><span>M</span></div>
+            <div class="diamond"><span>O</span></div>
+            <div class="diamond"><span>N</span></div>
+            <div class="diamond"><span>E</span></div>
+        </div>
+        <h1 class="glitch" data-text="MANGLISH_INTERPRETER">MANGLISH_INTERPRETER</h1>
+        <div class="enter-btn" onclick="startSystem()">[ INITIALIZE_SYSTEM ] ➜</div>
+    </div>
+
+    <div id="main-ui" style="display:none;">
+        <nav>
+            <div class="nav-item active" id="btn-intro" onclick="showTab('intro')">01_INTRODUCTION</div>
+            <div class="nav-item" id="btn-playground" onclick="showTab('playground')">02_PLAYGROUND</div>
+            <div class="nav-item" id="btn-output" onclick="showTab('output')">03_OUTPUT</div>
+        </nav>
+
+        <div class="content-area">
+            <section id="intro" class="tab-content active">
+                <h2>// SYSTEM_MANUAL</h2>
+                <div class="manual-entry">
+                    <h3>> KEYWORDS</h3>
+                    <p><code>namaskaram</code> : Entry Point<br>
+                    <code>ezhutuka</code> : Output Command<br>
+                    <code>ghatana</code> : Structure Definition</p>
+                </div>
+            </section>
+
+            <section id="playground" class="tab-content">
+                <textarea id="editor" spellcheck="false"># MONE System v1.0
+namaskaram
+    ezhutuka("Hello World")
+nanni</textarea>
+                <button class="execute-btn" onclick="runManglish()">EXECUTE_BINARY</button>
+            </section>
+
+            <section id="output" class="tab-content">
+                <div id="terminal-output">Waiting for execution instructions...</div>
+            </section>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

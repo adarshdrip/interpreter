@@ -1,0 +1,63 @@
+:root {
+    --neon: #00ff41;
+    --dark: #050505;
+    --glass: rgba(0, 255, 65, 0.1);
+}
+
+body {
+    background-color: var(--dark);
+    color: var(--neon);
+    font-family: 'Courier New', monospace;
+    margin: 0; overflow: hidden;
+    height: 100vh;
+}
+
+/* CRT Scanline Effect */
+body::after {
+    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
+    pointer-events: none; z-index: 10;
+}
+
+/* Splash Diamonds */
+.diamond-wrapper { display: flex; gap: 30px; margin-bottom: 50px; }
+.diamond {
+    width: 70px; height: 70px; background: var(--neon); color: black;
+    display: flex; align-items: center; justify-content: center;
+    transform: rotate(45deg); font-size: 2rem; font-weight: bold;
+    box-shadow: 0 0 20px var(--neon);
+}
+.diamond span { transform: rotate(-45deg); }
+
+#splash {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;
+}
+
+.enter-btn { cursor: pointer; font-size: 1.5rem; letter-spacing: 3px; margin-top: 20px; transition: 0.3s; }
+.enter-btn:hover { text-shadow: 0 0 15px var(--neon); transform: scale(1.1); }
+
+/* Navigation */
+nav { display: flex; border-bottom: 1px solid var(--neon); background: #111; }
+.nav-item { padding: 15px 30px; cursor: pointer; border-right: 1px solid #333; }
+.nav-item.active { background: var(--neon); color: black; font-weight: bold; }
+
+/* Tabs */
+.tab-content { display: none; padding: 30px; height: 70vh; }
+.tab-content.active { display: block; }
+
+#editor {
+    width: 100%; height: 80%; background: #000; color: var(--neon);
+    border: 1px solid var(--neon); padding: 20px; font-family: monospace;
+    font-size: 1.1rem; outline: none; box-sizing: border-box;
+}
+
+.execute-btn {
+    margin-top: 20px; padding: 10px 40px; background: transparent;
+    color: var(--neon); border: 1px solid var(--neon); cursor: pointer;
+}
+.execute-btn:hover { background: var(--neon); color: black; }
+
+#terminal-output {
+    background: black; padding: 20px; height: 80%; border: 1px solid #333;
+    white-space: pre-wrap; color: #aaa;
+}

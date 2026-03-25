@@ -5,7 +5,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lexer import Lexer
-from parser import Parser
+from myparser import Parser
 from interpreter import Interpreter
 
 def main():
