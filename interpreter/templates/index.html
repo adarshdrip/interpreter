@@ -242,11 +242,15 @@ nanni</code></pre>
             </section>
 
             <section id="playground" class="tab-content">
-                <textarea id="editor" spellcheck="false"># MONE System v1.0
+          <div class="editor-container">
+            <div id="highlight-layer" aria-hidden="true"></div>
+            <textarea id="editor" spellcheck="false" oninput="updateHighlight()" onscroll="syncScroll()">
 namaskaram
-    ezhutuka("Hello World")
-nanni</textarea>
-                <div class="input-panel">
+    parayu "Hello World"
+nanni
+            </textarea>
+          </div>
+          <div class="input-panel">
                     <label for="stdin-input">// INPUT_BUFFER (one value per line)</label>
                     <textarea id="stdin-input" spellcheck="false" placeholder="2&#10;4"></textarea>
                 </div>
