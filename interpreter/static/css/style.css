@@ -512,7 +512,11 @@ nav {
     caret-color: var(--neon); /* Keep the blinking cursor visible */
     z-index: 2;
     resize: none;
-   caret-shape: block;
+    caret-shape: block;
+    overflow-y: scroll; /* Always show scrollbar to keep width consistent */
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 /* The Highlighting Div: Sits behind the textarea */
@@ -521,6 +525,8 @@ nav {
     z-index: 1;
     pointer-events: none; /* Let clicks pass through to the textarea */
     overflow-y: auto;
+    overflow: hidden; /* Important: Let JS sync the scrollTop */
+    scrollbar-width: none; /* F
 }
 
 /* Syntax Highlighting Tokens */

@@ -74,17 +74,16 @@ async function runManglish() {
     }
 }
 
+// Optimized Highlight with "Line-End" Fix
 function updateHighlight() {
     const editor = document.getElementById('editor');
     const highlightLayer = document.getElementById('highlight-layer');
-    
     let code = editor.value;
 
-    // 1. Escape HTML first (Crucial!)
+    // Escape HTML
     code = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-    // 2. Combined Regex (The "Big" Rule)
-    // This looks for Keywords OR Strings OR Comments OR Numbers in one go
+    // Keywords, Strings, Comments, Numbers
     const bigRegex = /(".*?"|'.*?')|(#.*)|(\b(?:namaskaram|nanni|parayu|eduku|anengil|enkil|allengil|pravarthanam|thirike|kodku|ghatana|avarthikuka)\b)|(\b\d+(\.\d+)?\b)/g;
 
     const highlightedCode = code.replace(bigRegex, (match, string, comment, keyword, number) => {
@@ -95,12 +94,37 @@ function updateHighlight() {
         return match;
     });
 
-    // 3. Update the layer
-    highlightLayer.innerHTML = highlightedCode + (code.endsWith('\n') ? ' ' : '');
+    // The Fix: Always add a trailing space/newline so the heights match perfectly
+    highlightLayer.innerHTML = highlightedCode + (code.endsWith('\n') ? ' <br>' : ' ');
     
-    // 4. Force scroll sync
     syncScroll();
 }
+
+// Robust Tab Handling (Supports Block Indent)
+editor.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+
+        // If user has selected multiple lines
+        if (start !== end) {
+            const lines = this.value.substring(start, end).split('\n');
+            const indentedLines = lines.map(line => "    " + line).join('\n');
+            this.value = this.value.substring(0, start) + indentedLines + this.value.substring(end);
+            this.selectionStart = start;
+            this.selectionEnd = start + indentedLines.length;
+        } else {
+            // Single cursor indent
+            this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 4;
+        }
+        updateHighlight();
+    }
+});
+
+// Auto-Sync on Scroll (Visual Insurance)
+editor.addEventListener('scroll', syncScroll);
 
 function syncScroll() {
     const editor = document.getElementById('editor');
@@ -132,26 +156,3 @@ function useExample(button, inputs = '') {
     editor.scrollTop = 0;
     syncScroll();
 }
-
-const editor = document.getElementById('editor');
-editor.addEventListener('keydown', function(e) {
-    if (e.key === 'Tab') {
-        // 1. Prevent moving focus to the next textarea
-        e.preventDefault();
-
-        // 2. Get cursor position
-        const start = this.selectionStart;
-        const end = this.selectionEnd;
-
-        // 3. Set textarea value: [text before] + [4 spaces] + [text after]
-        this.value = this.value.substring(0, start) + 
-                     "    " + 
-                     this.value.substring(end);
-
-        // 4. Put cursor back 4 spaces ahead
-        this.selectionStart = this.selectionEnd = start + 4;
-
-        // 5. Trigger your highlight function so the new spaces are processed
-        updateHighlight();
-    }
-});
